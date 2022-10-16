@@ -1,15 +1,23 @@
 /*
-    finding the kth ancestor of a node in log(n) time.
+    finding lowest common ancestor using binary lifting.
 */
 
 #include <bits/stdc++.h>
 
 using namespace std;
 
+#define N 100000
+
 int LOG = 31;
+int depth[N];
 
 void dfs(vector<vector<int>> &tree, int node, vector<vector<int>> &ancestor, int parent){
     ancestor[node][0] = parent;
+
+    if(parent != -1){
+        depth[node] = depth[parent] + 1;
+    }
+    
     for(int i=0; i<tree[node].size(); i++){
         dfs(tree, tree[node][i], ancestor, node);
     }
@@ -37,6 +45,34 @@ int KthAncestor(vector<vector<int>> &ancestor, int node, int k){
 }
 
 
+int lca(vector<vector<int>> &tree, vector<vector<int>> &ancestor, int a, int b){
+    // consider a is always deapest node
+    if(depth[a] < depth[b]){
+        swap(a, b);
+    }
+
+    // make both nodes at same level
+    int k = depth[a] - depth[b];
+    a = KthAncestor(ancestor, a, k);
+
+    // this is corner case where a and b becomes equal
+    if(a == b){
+        return a;
+    }
+
+    // get to the closest level of lowest common ancestor, start making higher jumbs in powers of 2
+    for(int i=LOG; i>=0; i--){
+        if(ancestor[a][i] != ancestor[b][i]){
+            a = ancestor[a][i];
+            b = ancestor[b][i];
+        }
+    }
+
+    return ancestor[a][0];
+
+}
+
+
 int main()
 {
     #ifndef ONLINE_JUDGE
@@ -56,6 +92,7 @@ int main()
 
     // first fill all the parents of nodes, all ancestor[][0] using dfs
     int root = 1;
+    memset(depth, 0, sizeof(depth));
     dfs(tree, root, ancestor, -1);
 
     // Now fill all the ancestors who are power of 2
